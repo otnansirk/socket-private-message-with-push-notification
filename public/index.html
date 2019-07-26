@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <title>Private message</title>
+    <style type="text/css">
+		.overflow-auto {
+			height:600px;
+			overflow-y: scroll;
+		}
+    </style>
+  </head>
+  <body>
+  	<div class="container-fluid ">
+		<div class="row">
+			<div class="col col-md-5">
+				<div class="register-form">
+					<h1>Private Message</h1><br>
+					<div class="form-group">
+						<label for="nickname">Nickname</label>
+						<input type="text" class="form-control  col-md-4" id="nickname" placeholder="Nickname">
+						<small id="emailHelp" class="form-text text-muted"></small>
+					</div>
+					<button id="register" class="btn btn-success col-md-2">Register</button>
+
+					<br><br>
+					<div class="form-group">
+						<label for="to">To</label>
+						<input type="text" class="form-control col-md-2" id="to" placeholder="To : Nickname">
+					</div>
+
+					<div class="form-group">
+						<label for="message">Message</label>
+						<textarea class="form-control" id="message" placeholder="Typing . . . ."></textarea>
+					</div>
+
+					<button id="send-message" class="btn btn-primary  col-md-2">send</button>
+				</div>
+			</div>
+			<div class="col overflow-auto">
+				<h3>Message</h3>
+                <div id="show-message"></div>
+			</div>
+		</div>
+	</div>
+
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
+    <!-- <script src="https://code.jquery.com/jquery-1.11.1.js"></script> -->
+    <script>
+        var socket = io("http://192.168.0.190:3000");
+    </script>
+    <script>
+        $(function () {
+            var userID;
+            var name;
+            var socketP = io.connect("http://192.168.0.190:3000/private");
+            
+            $('#register').on('click', function (e) {
+                socketP.emit("register-user", {
+                    nickname : $('#nickname').val(),
+                    socketId : socket.id
+                })
+                return false;
+            });
+
+            $('#send-message').on('click', function(){
+                var nickname = $('#nickname').val();
+                var recipient = $('#to').val();
+                var message = $('#message').val();
+                $('#show-message').append(''+
+                '<div class="alert alert-warning" role="alert"><b>Me : </b>'+
+                    message +
+                '</div>');
+
+                socketP.emit('private-message', {
+                    nickname : recipient, 
+                    message : message,
+                    nicknameFrom : nickname
+                });
+            })
+
+            socketP.on('new_private_message', function(data) {
+                console.log(data)
+                var icon = 'https://png.pngtree.com/element_our/sm/20180626/sm_5b321ca7a1ca4.png';
+                showDesktopNotification(data.nicknameFrom, data.message, icon);
+
+                $('#show-message').append(''+
+                '<div class="alert alert-success" role="alert"><b>'+data.nicknameFrom+': </b>'+
+                    data.message +
+                '</div>');
+            })
+
+
+
+        /**
+     * Set Default Socket For Show Notification
+     * @param {type} data
+     * @returns {undefined}
+     */
+    socket.on('show_notification', function (data) {
+        showDesktopNotification(data.title, data.message, data.icon);
+    });
+    /**
+     * Set Notification Request
+     * @type type
+     */
+    function setNotification() {
+        showDesktopNotification('Lokesh', 'Desktop Notification..!', '/index.jpeg');
+        sendNodeNotification('Lokesh', 'Browser Notification..!', '/index.jpeg');
+    }
+    /**
+     * Check Browser Notification Permission
+     * @type window.Notification|Window.Notification|window.webkitNotification|Window.webkitNotification|Window.mozNotification|window.mozNotification
+     */
+    var Notification = window.Notification || window.mozNotification || window.webkitNotification;
+        Notification.requestPermission(function (permission) {
+        
+        });
+
+    /**
+     * Request Browser Notification Permission 
+     * @type Arguments
+     */
+    function requestNotificationPermissions() {
+        if (Notification.permission !== 'denied') {
+            Notification.requestPermission(function (permission) {
+            });
+        }
+    }
+    /**
+     * Show Desktop Notification If Notification Allow
+     * @param {type} title
+     * @param {type} message
+     * @param {type} icon
+     * @returns {undefined}
+     */
+    function showDesktopNotification(message, body, icon, timeout = false) {
+        if (!timeout) {
+            timeout = 4000;
+        }
+        requestNotificationPermissions();
+        var instance = new Notification(
+                message, {
+                    body: body,
+                    icon: icon,
+                }
+        );
+        instance.onclick = function () {
+            // Something to do
+        };
+        instance.onerror = function () {
+            // Something to do
+        };
+        instance.onshow = function () {
+            console.log("ssss");
+        };
+        instance.onclose = function () {
+            // Something to do
+        };
+        setTimeout(instance.close.bind(instance), timeout);
+        return false;
+    }
+    /**
+     * Send Node Notification
+     * @param {type} title
+     * @param {type} message
+     * @param {type} icon
+     * @returns {undefined}
+     */
+    function sendNodeNotification(title, message, icon) {
+        socket.emit('new_notification', {
+            message: message,
+            title: title,
+            icon: icon,
+        });
+    }
+        });
+    </script>
+  </body>
+</html>
