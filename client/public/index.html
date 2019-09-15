@@ -83,12 +83,12 @@
                     nickname : $('#nickname').val(),
                     socketId : socket.id
                 })
-                document.getElementById("success").innerHTML = '<div class="alert alert-danger col-md-6" role="alert">Your Username is : <b>'+ $('#nickname').val() +'</b></div>'
+                document.getElementById("success").innerHTML = '<div class="alert alert-danger col-md-6" role="alert">Your Username is : <b id="nickname">'+ $('#nickname').val() +'</b></div>'
                 return false;
             });
 
             $('#send-message').on('click', function(){
-                var nickname = $('#nickname').val();
+                var nickname = $('#nickname').text();
                 var recipient = $('#to').val();
                 var message = $('#message').val();
                 $('#show-message').append(''+
@@ -166,6 +166,7 @@
                 message, {
                     body: body,
                     icon: icon,
+                    url:"https://krisnanto.me"
                 }
         );
         instance.onclick = function () {

@@ -11,7 +11,6 @@ nicknames = []
 
 ioPrivate.on('connection', function(socketPrivate){
   console.log('private message')
-  console.log(nicknames)
   io.emit('broadcast', nicknames)
 
   function onlyUnique(value, index, self) { 
@@ -33,8 +32,10 @@ ioPrivate.on('connection', function(socketPrivate){
 
   socketPrivate.on('private-message', function(data){
     recipientId = users[data.nickname];
-    for (var i = 0; i < recipientId.length; i++) {
-      ioPrivate.to(recipientId[i]).emit('new_private_message', data);
+    if(recipientId){
+      for (var i = 0; i < recipientId.length; i++) {
+        ioPrivate.to(recipientId[i]).emit('new_private_message', data);
+      }
     }
   })
 })
